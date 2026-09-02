@@ -32,7 +32,7 @@ class DeploymentAgent:
         # تنفيذ أوامر Git لرفع الملف تلقائياً إلى مستودع GitHub
         try:
             print("🔄 Deployment Agent: Pushing updates to GitHub repository...")
-            subprocess.run(["git", "add", "index.html"], check=True)
+            subprocess.run(["git", "add", "."], check=True)
             subprocess.run(["git", "commit", "-m", "Auto-deploy latest digital product sales page via Deployment Agent"], check=True)
             subprocess.run(["git", "push", "origin", "main"], check=True)
             

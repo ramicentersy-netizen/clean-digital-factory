@@ -17,9 +17,9 @@ class SalesPageAgent:
 
     def generate_sales_page(self):
         """
-        توليد صفحة بيع احترافية مصممة للتحويل ومربوطة بمحفظة USDT للدفع المباشر
+        توليد صفحة بيع احترافية مصممة للتحويل ومربوطة مباشرة ببوت تيليجرام للدفع والتسليم الفوري
         """
-        print("🌐 Sales Agent: Building high-converting sales page with USDT payment integration...")
+        print("🌐 Sales Agent: Building high-converting sales page with Telegram Bot integration...")
         
         latest_file = self.find_latest_product()
         if not latest_file:
@@ -29,7 +29,8 @@ class SalesPageAgent:
         with open(latest_file, "r", encoding="utf-8") as f:
             product = json.load(f)
 
-        # ضع هنا عنوان محفظة الـ USDT (TRC20) الخاصة بك على باينانس
+        # رابط بوت تيليجرام المباشر للتسليم الفوري
+        telegram_bot_url = "https://t.me/RamiHasanDigitalStore_bot"
         usdt_wallet_address = "TL3BavN5gnMFqW2xjdnQDJRhc2n6spEFhK"
 
         timestamp = int(time.time())
@@ -44,12 +45,12 @@ class SalesPageAgent:
     <title>{product['title']} | Official Store</title>
     <style>
         body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; background: #f4f7f6; }}
-        .header {{ background: linear-gradient(135deg, #6a11cb, #2575fc); color: white; padding: 40px; text-align: center; border-radius: 12px; }}
+        .header {{ background: linear-gradient(135deg, #0088cc, #2575fc); color: white; padding: 40px; text-align: center; border-radius: 12px; }}
         .content {{ background: white; padding: 30px; margin-top: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }}
         .price {{ font-size: 32px; color: #27ae60; font-weight: bold; margin: 20px 0; }}
-        .buy-btn {{ display: block; width: 100%; background: #27ae60; color: white; text-align: center; padding: 15px; font-size: 20px; font-weight: bold; text-decoration: none; border-radius: 8px; margin-top: 30px; transition: 0.3s; }}
-        .buy-btn:hover {{ background: #219653; }}
-        .crypto-box {{ background: #fff8e1; border: 1px dashed #ffa000; padding: 15px; border-radius: 8px; margin-top: 25px; }}
+        .buy-btn {{ display: block; width: 100%; box-sizing: border-box; background: #0088cc; color: white; text-align: center; padding: 18px; font-size: 20px; font-weight: bold; text-decoration: none; border-radius: 8px; margin-top: 30px; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,136,204,0.3); }}
+        .buy-btn:hover {{ background: #006699; }}
+        .crypto-box {{ background: #f0f8ff; border: 1px dashed #0088cc; padding: 20px; border-radius: 8px; margin-top: 25px; }}
     </style>
 </head>
 <body>
@@ -68,16 +69,17 @@ class SalesPageAgent:
         <ul>
             <li>Complete Notion Workspace System</li>
             <li>Automated Client & Project Trackers</li>
+            <li>Instant 24/7 Automated Delivery via Telegram</li>
             <li>Lifetime Access & Future Updates</li>
         </ul>
 
         <div class="crypto-box">
-            <h4 style="margin-top: 0; color: #d32f2f;">💳 Direct Crypto Checkout (USDT - TRC20)</h4>
-            <p style="margin: 5px 0; font-size: 14px;">To purchase instantly, send <b>${product['price_usd']} USDT</b> to our official TRC20 wallet address below, then email your transaction hash to get instant access:</p>
-            <code style="display: block; background: #fff; padding: 10px; border: 1px solid #ddd; word-break: break-all; font-weight: bold; color: #333;">{usdt_wallet_address}</code>
+            <h4 style="margin-top: 0; color: #0088cc;">⚡ Instant 24/7 Delivery via Telegram Bot</h4>
+            <p style="margin: 5px 0; font-size: 14px;">Pay securely with <b>USDT (TRC20)</b> and get your Notion template delivered directly to your chat instantly by our automated sales bot.</p>
+            <p style="font-size: 13px; color: #666; margin-top: 8px;">Official TRC20 Wallet: <code style="word-break: break-all; font-weight: bold; color: #222;">{usdt_wallet_address}</code></p>
         </div>
 
-        <a href="#checkout" class="buy-btn">Get Instant Access Now</a>
+        <a href="{telegram_bot_url}" target="_blank" class="buy-btn">⚡ Buy Now & Get Instant Access via Telegram</a>
     </div>
 </body>
 </html>
