@@ -1,27 +1,34 @@
+import os
+import threading
+import requests
+from flask import Flask
 import telebot
 from telebot import types
-import requests
-import time
 
+# 1. إعداد تطبيق الويب
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "✅ Telegram Live Store Bot is Running 24/7!", 200
+
+# 2. إعدادات البوت والمدفوعات
 BOT_TOKEN = "8643569059:AAGKs1bE3dJGjC-YI-CfmI80MJiZSBjvGPA"
-ADMIN_CHAT_ID = "658340386"  # حسابك الشخصي لاستلام الإشعارات
-bot = telebot.TeleBot(BOT_TOKEN)
-
-# إعدادات المحفظة والمنتج
+ADMIN_CHAT_ID = "658340386"
 WALLET_ADDRESS = "TL3BavN5gnMFqW2xjdnQDJRhc2n6spEFhK"
 PRODUCT_NAME = "The Ultimate Freelancer Client & Project Hub (Notion Template)"
-EXPECTED_AMOUNT = 9.99  # السعر بالـ USDT
+EXPECTED_AMOUNT = 9.99
 NOTION_DELIVERY_LINK = "https://www.notion.so/your-template-link-here"
 
+bot = telebot.TeleBot(BOT_TOKEN)
+
 def send_admin_alert(text):
-    """إرسال إشعار فوري لحساب الأدمن"""
     try:
         bot.send_message(ADMIN_CHAT_ID, text, parse_mode="Markdown")
     except Exception as e:
         print(f"⚠️ Admin alert error: {e}")
 
 def verify_tron_tx(txid, target_wallet, expected_amount):
-    """التحقق من صحة معاملة USDT TRC20 عبر TronScan API"""
     url = f"https://apilist.tronscanapi.com/api/transaction-info?hash={txid.strip()}"
     headers = {"User-Agent": "Mozilla/5.0"}
     try:
@@ -30,7 +37,6 @@ def verify_tron_tx(txid, target_wallet, expected_amount):
             return False, "تعذر الاتصال بشبكة ترون حالياً، حاول مجدداً بعد لحظات."
         
         data = response.json()
-        
         if not data.get("confirmed") or data.get("contractRet") != "SUCCESS":
             return False, "المعاملة غير مؤكدة أو فشلت على الشبكة."
         
@@ -56,8 +62,6 @@ def verify_tron_tx(txid, target_wallet, expected_amount):
 def send_welcome(message):
     user = message.from_user
     username = f"@{user.username}" if user.username else user.first_name
-    
-    # إشعار المدير بدخول عميل جديد
     send_admin_alert(f"👤 *عميل جديد دخل البوت!*\nالاسم: {user.first_name}\nاليوزر: {username}\nالآيدي: `{user.id}`")
 
     welcome_text = (
@@ -104,7 +108,6 @@ def handle_verification(message):
         return
 
     verifying_msg = bot.reply_to(message, "⏳ Verifying transaction on the blockchain... Please wait 5 seconds.")
-    
     is_valid, reason = verify_tron_tx(txid, WALLET_ADDRESS, EXPECTED_AMOUNT)
     
     if is_valid:
@@ -116,7 +119,6 @@ def handle_verification(message):
         )
         bot.edit_message_text(delivery_text, chat_id=message.chat.id, message_id=verifying_msg.message_id, parse_mode="Markdown")
         
-        # إشعار المدير بإتمام عملية الشراء بنجاح واستلام المبلغ
         admin_sale_msg = (
             f"💰 *مبروك! عملية بيع جديدة ناجحة!*\n\n"
             f"👤 العميل: {username}\n"
@@ -133,6 +135,14 @@ def handle_verification(message):
         )
         bot.edit_message_text(failure_text, chat_id=message.chat.id, message_id=verifying_msg.message_id)
 
-if __name__ == "__main__":
-    print("🟢 Live Auto-Verifying Bot with Admin Alerts is running...")
+def run_bot():
+    print("🟢 Live Auto-Verifying Bot is listening...")
     bot.infinity_polling()
+
+# تشغيل البوت في خيط خلفي فور تحميل الملف عبر Gunicorn
+bot_thread = threading.Thread(target=run_bot, daemon=True)
+bot_thread.start()
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
