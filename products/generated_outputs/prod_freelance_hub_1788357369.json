@@ -1,0 +1,21 @@
+{
+    "product_id": "prod_freelance_hub_1788357369",
+    "niche": "Remote Work & Freelancer Productivity",
+    "title": "The Ultimate Freelancer Client & Project Hub (Notion Template)",
+    "description": "An all-in-one workspace designed for freelancers to track clients, manage active projects, monitor invoices, and organize daily tasks seamlessly.",
+    "target_audience": "Freelancers, Remote Workers, Solo-Entrepreneurs",
+    "price_usd": 9.99,
+    "components": [
+        "Client Relationship Manager (CRM)",
+        "Project & Task Kanban Board",
+        "Invoice & Income Tracker",
+        "Daily Productivity Planner"
+    ],
+    "status": "Ready for Sales Page Generation",
+    "created_at": "2026-09-02T16:56:09.752852",
+    "upsell_offer": {
+        "upsell_title": "VIP AI Mastery Toolkit & Automation Scripts",
+        "upsell_price_usd": 19.99,
+        "benefit": "Accelerate your workflow with pre-built Python scripts and advanced AI prompts."
+    }
+}
