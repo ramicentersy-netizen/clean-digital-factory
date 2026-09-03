@@ -1,0 +1,24 @@
+@'
+{
+  "product_id": "prod_second_brain_1788370001",
+  "niche": "Personal Knowledge Management & Life Organization",
+  "title": "Ultimate Second Brain OS (Notion Template)",
+  "description": "A comprehensive digital life management workspace built on the PARA method to capture ideas, manage projects, and track habits effortlessly.",
+  "target_audience": "Knowledge Workers, Creators, Students, Professionals",
+  "price_usd": 19.99,
+  "components": [
+    "PARA System Dashboard (Projects, Areas, Resources, Archives)",
+    "Automated Habit & Daily Routine Tracker",
+    "Quick Capture & Notes Inbox",
+    "Reading List & Media Hub"
+  ],
+  "status": "Ready for Sales Page Generation",
+  "template_url": "https://meadow-cork-ca9.notion.site/Notion-3d05f716ea9d8023bc89e1e5ef30ad35?source=copy_link",
+  "created_at": "2026-09-03T11:00:00.000000",
+  "upsell_offer": {
+    "upsell_title": "Productivity Mastery & Time-Blocking Toolkit",
+    "upsell_price_usd": 14.99,
+    "benefit": "Maximize deep work sessions with proven time-blocking templates and AI prompt guides."
+  }
+}
+'@ | Set-Content -Path "products\generated_outputs\prod_second_brain_1788370001.json" -Encoding utf8
