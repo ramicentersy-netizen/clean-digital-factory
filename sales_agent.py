@@ -15,13 +15,13 @@ class SalesPageAgent:
             return None
         return max(files, key=os.path.getctime)
 
-    def generate_sales_page(self):
+    def generate_sales_page(self, target_file=None):
         """
         توليد صفحة بيع احترافية مصممة للتحويل ومربوطة مباشرة ببوت تيليجرام للدفع والتسليم الفوري
         """
         print("🌐 Sales Agent: Building high-converting sales page with Telegram Bot integration...")
         
-        latest_file = self.find_latest_product()
+        latest_file = target_file if target_file else self.find_latest_product()
         if not latest_file:
             print("❌ Sales Agent Error: No product spec found.")
             return False
