@@ -1,0 +1,22 @@
+﻿{
+  "product_id": "prod_mobile_repair_os_1788426000",
+  "niche": "Mobile Repair & Electronics Retail",
+  "title": "Mobile Repair & Store Management OS (Notion Template)",
+  "description": "An all-in-one Notion workspace designed for phone repair shops and electronics retail businesses to track repair tickets, manage parts inventory, monitor daily sales, and maintain client CRM records.",
+  "target_audience": "Phone Repair Technicians, Electronics Retailers, Mobile Shop Owners",
+  "price_usd": 14.99,
+  "components": [
+    "Repair Tickets Hub with Intake & Diagnostic Tracking",
+    "Spare Parts & Accessories Inventory Manager",
+    "Daily Sales & Profit Calculation Ledger",
+    "Customer Directory & Service History Log"
+  ],
+  "status": "Ready for Sales Page Generation",
+  "template_url": "https://meadow-cork-ca9.notion.site/3d05f716ea9d8060a6e8d73e169a35a0?v=292e099d9e154cda971819c5d9685890&source=copy_link",
+  "created_at": "2026-09-04T09:40:00.000000",
+  "upsell_offer": {
+    "upsell_title": "Smart Diagnostic SOPs & Inventory Auto-Reorder Guide",
+    "upsell_price_usd": 9.99,
+    "benefit": "Standard operating procedures for rapid board diagnostics and supplier management protocols."
+  }
+}
