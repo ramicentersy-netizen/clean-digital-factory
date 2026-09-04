@@ -34,7 +34,7 @@ class SalesPageAgent:
         usdt_wallet_address = "TL3BavN5gnMFqW2xjdnQDJRhc2n6spEFhK"
 
         timestamp = int(time.time())
-        filename = f"prod_freelance_hub_{timestamp}.html"
+        pid = product.get("product_id", "prod"); filename = f"{pid}_{timestamp}.html"
         filepath = os.path.join(self.web_dir, filename)
 
         html_content = f"""<!DOCTYPE html>
