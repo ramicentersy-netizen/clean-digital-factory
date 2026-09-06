@@ -26,7 +26,7 @@ class SalesPageAgent:
             print("❌ Sales Agent Error: No product spec found.")
             return False
 
-        with open(latest_file, "r", encoding="utf-8") as f:
+        with open(latest_file, "r", encoding="utf-8-sig") as f:
             product = json.load(f)
 
         # رابط بوت تيليجرام المباشر للتسليم الفوري
@@ -85,7 +85,7 @@ class SalesPageAgent:
 </html>
 """
 
-        with open(filepath, "w", encoding="utf-8") as f:
+        with open(filepath, "w", encoding="utf-8-sig") as f:
             f.write(html_content)
 
         print(f"✅ Sales Agent: Professional sales page generated successfully: {filepath}")
