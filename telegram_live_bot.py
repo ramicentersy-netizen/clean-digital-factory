@@ -23,28 +23,45 @@ def get_products():
                         pid = data.get("product_id")
                         if pid:
                             products[pid] = data
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(f"Error loading {f}: {e}")
     return products
+
+def match_product(query_pid, products):
+    if not query_pid:
+        return None, None
+    if query_pid in products:
+        return query_pid, products[query_pid]
+    
+    # بحث مرن بالكلمات الدلالية
+    q = query_pid.lower()
+    for pid, data in products.items():
+        if "repair" in q and "repair" in pid:
+            return pid, data
+        if "second_brain" in q and "second_brain" in pid:
+            return pid, data
+        if "finance" in q and "finance" in pid:
+            return pid, data
+    return None, None
 
 def is_tx_processed(txid):
     if not os.path.exists(PROCESSED_TX_FILE):
         return False
-    with open(PROCESSED_TX_FILE, "r", encoding="utf-8") as f:
-        try:
+    try:
+        with open(PROCESSED_TX_FILE, "r", encoding="utf-8") as f:
             records = json.load(f)
             return txid in records
-        except Exception:
-            return False
+    except Exception:
+        return False
 
 def mark_tx_processed(txid, pid, amount):
     records = {}
     if os.path.exists(PROCESSED_TX_FILE):
-        with open(PROCESSED_TX_FILE, "r", encoding="utf-8") as f:
-            try:
+        try:
+            with open(PROCESSED_TX_FILE, "r", encoding="utf-8") as f:
                 records = json.load(f)
-            except Exception:
-                records = {}
+        except Exception:
+            records = {}
     records[txid] = {"product_id": pid, "amount": amount}
     with open(PROCESSED_TX_FILE, "w", encoding="utf-8") as f:
         json.dump(records, f, indent=2)
@@ -90,73 +107,84 @@ user_sessions = {}
 
 @bot.message_handler(commands=["start"])
 def handle_start(message):
-    args = message.text.split()
-    products = get_products()
-    pid = args[1].strip() if len(args) > 1 else None
+    try:
+        args = message.text.split()
+        products = get_products()
+        query_pid = args[1].strip() if len(args) > 1 else None
 
-    if pid and pid in products:
-        prod = products[pid]
-        user_sessions[message.chat.id] = pid
-        price = prod.get("price_usd", "0")
-        title = prod.get("title", "Product")
-        msg = (
-            f"🛍️ *Order Confirmation: {title}*\n\n"
-            f"💵 *Amount Due:* `{price} USDT` (TRC20)\n"
-            f"📥 *Official TRC20 Wallet:*\n`{MERCHANT_WALLET}`\n\n"
-            f"📌 *Instructions:*\n"
-            f"1. Transfer the exact amount above.\n"
-            f"2. Copy your transaction hash (**TXID**).\n"
-            f"3. Send the TXID here for instant automated delivery!"
-        )
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("Verify Transaction / إرسال الـ TXID", callback_data=f"verify_{pid}"))
-        bot.send_message(message.chat.id, msg, parse_mode="Markdown", reply_markup=markup)
-    else:
-        bot.send_message(
-            message.chat.id,
-            "👋 Welcome to the Digital Products Automated Delivery Bot!\n\nPlease select a product from our live storefront to proceed with purchase.",
-            parse_mode="Markdown"
-        )
+        actual_pid, prod = match_product(query_pid, products)
+
+        if prod:
+            user_sessions[message.chat.id] = actual_pid
+            price = prod.get("price_usd", "0")
+            title = prod.get("title", "Product")
+            
+            msg = (
+                f"🛍️ Order Confirmation: {title}\n\n"
+                f"💵 Amount Due: {price} USDT (TRC20)\n"
+                f"📥 Official TRC20 Wallet:\n{MERCHANT_WALLET}\n\n"
+                f"📌 Instructions:\n"
+                f"1. Transfer the exact amount above.\n"
+                f"2. Copy your transaction hash (TXID).\n"
+                f"3. Send the TXID here for instant automated delivery!"
+            )
+            markup = types.InlineKeyboardMarkup()
+            markup.add(types.InlineKeyboardButton("Verify Transaction / إرسال الـ TXID", callback_data=f"verify_{actual_pid}"))
+            bot.send_message(message.chat.id, msg, reply_markup=markup)
+            print(f"✅ Order details sent for: {title}")
+        else:
+            bot.send_message(
+                message.chat.id,
+                "👋 Welcome to the Digital Products Automated Delivery Bot!\n\nPlease select a product from our live storefront to proceed with purchase."
+            )
+    except Exception as e:
+        print(f"❌ Error in handle_start: {e}")
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("verify_"))
 def prompt_txid(call):
-    pid = call.data.replace("verify_", "")
-    user_sessions[call.message.chat.id] = pid
-    bot.send_message(call.message.chat.id, "✍️ Please paste your TRC20 **TXID / Hash** here:", parse_mode="Markdown")
+    try:
+        pid = call.data.replace("verify_", "")
+        user_sessions[call.message.chat.id] = pid
+        bot.send_message(call.message.chat.id, "✍️ Please paste your TRC20 TXID / Hash here:")
+    except Exception as e:
+        print(f"❌ Error in prompt_txid: {e}")
 
 @bot.message_handler(func=lambda msg: len(msg.text.strip()) == 64)
 def handle_txid(message):
-    txid = message.text.strip()
-    chat_id = message.chat.id
-    pid = user_sessions.get(chat_id)
+    try:
+        txid = message.text.strip()
+        chat_id = message.chat.id
+        pid = user_sessions.get(chat_id)
 
-    products = get_products()
-    if not pid or pid not in products:
-        bot.send_message(chat_id, "⚠️ Please initiate an order by clicking 'Buy / Instant Access' from the storefront first.")
-        return
+        products = get_products()
+        if not pid or pid not in products:
+            bot.send_message(chat_id, "⚠️ Please initiate an order by clicking 'Buy / Instant Access' from the storefront first.")
+            return
 
-    if is_tx_processed(txid):
-        bot.send_message(chat_id, "❌ This transaction ID has already been redeemed.")
-        return
+        if is_tx_processed(txid):
+            bot.send_message(chat_id, "❌ This transaction ID has already been redeemed.")
+            return
 
-    prod = products[pid]
-    price = float(prod.get("price_usd", 19.99))
-    bot.send_message(chat_id, "🔍 Verifying transaction on TRON blockchain, please hold on...")
+        prod = products[pid]
+        price = float(prod.get("price_usd", 19.99))
+        bot.send_message(chat_id, "🔍 Verifying transaction on TRON blockchain, please hold on...")
 
-    ok, res = verify_tron_tx(txid, price)
-    if ok:
-        mark_tx_processed(txid, pid, res)
-        template_url = prod.get("template_url", "#")
-        success_msg = (
-            f"🎉 *Payment Confirmed Successfully!*\n\n"
-            f"📦 *Product:* {prod.get('title')}\n"
-            f"💰 *Received:* {res} USDT\n\n"
-            f"🔗 *Instant Access Link:*\n[Click Here to Open & Duplicate Notion OS]({template_url})\n\n"
-            f"Thank you for your purchase!"
-        )
-        bot.send_message(chat_id, success_msg, parse_mode="Markdown", disable_web_page_preview=False)
-    else:
-        bot.send_message(chat_id, f"❌ Verification Failed:\n{res}")
+        ok, res = verify_tron_tx(txid, price)
+        if ok:
+            mark_tx_processed(txid, pid, res)
+            template_url = prod.get("template_url", "#")
+            success_msg = (
+                f"🎉 Payment Confirmed Successfully!\n\n"
+                f"📦 Product: {prod.get('title')}\n"
+                f"💰 Received: {res} USDT\n\n"
+                f"🔗 Instant Access Link:\n{template_url}\n\n"
+                f"Thank you for your purchase!"
+            )
+            bot.send_message(chat_id, success_msg)
+        else:
+            bot.send_message(chat_id, f"❌ Verification Failed:\n{res}")
+    except Exception as e:
+        print(f"❌ Error in handle_txid: {e}")
 
-print("🟢 Starting Automated Payment Verification Telegram Bot...")
+print("🟢 Starting Automated Payment Verification Telegram Bot (Smart Matching Enabled)...")
 bot.infinity_polling(skip_pending=True)
