@@ -1,8 +1,26 @@
 ﻿import os
 import json
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 import requests
 import telebot
 from telebot import types
+
+# 1. خادم HTTP خفيف لتجاوز Health Check الخاص بـ Render
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain; charset=utf-8')
+        self.end_headers()
+        self.wfile.write(b"Bot is running smoothly 24/7!")
+
+    def log_message(self, format, *args):
+        return  # كتم سجلات الفحص الدوري لمنع ازدحام الـ Logs
+
+def run_health_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
+    server.serve_forever()
 
 BOT_TOKEN = "8643569059:AAGtNPhQRSt6_mGImHmazlL0zhrjpQ9q6nA"
 MERCHANT_WALLET = "TL3BavN5gnMFqw2XjdnQDJRhc2n6spEFhK"
@@ -33,7 +51,6 @@ def match_product(query_pid, products):
     if query_pid in products:
         return query_pid, products[query_pid]
     
-    # بحث مرن بالكلمات الدلالية
     q = query_pid.lower()
     for pid, data in products.items():
         if "repair" in q and "repair" in pid:
@@ -186,5 +203,11 @@ def handle_txid(message):
     except Exception as e:
         print(f"❌ Error in handle_txid: {e}")
 
-print("🟢 Starting Automated Payment Verification Telegram Bot (Smart Matching Enabled)...")
-bot.infinity_polling(skip_pending=True)
+if __name__ == "__main__":
+    # تشغيل خادم الـ Health Check على خيط منفصل للاستجابة لـ Render
+    health_thread = threading.Thread(target=run_health_server, daemon=True)
+    health_thread.start()
+    print("🟢 HTTP Health check server running for Render...")
+
+    print("🟢 Starting Automated Payment Verification Telegram Bot (Smart Matching Enabled)...")
+    bot.infinity_polling(skip_pending=True)
