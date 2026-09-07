@@ -1,24 +1,22 @@
-@'
 {
-  "product_id": "prod_finance_tracker_1788370002",
-  "niche": "Personal Finance, Budgeting & Wealth Management",
-  "title": "Minimalist Personal Finance & Wealth Tracker (Notion Template)",
-  "description": "An intuitive financial operating system to track income, control expenses, audit subscriptions, and calculate net worth in one clean dashboard.",
-  "target_audience": "Young Professionals, Investors, Budgeters, Side-Hustlers",
-  "price_usd": 14.99,
+  "product_id": "prod_finance_tracker_1788691000",
+  "niche": "Personal Finance & Wealth Management",
+  "title": "Finance & Wealth Tracker OS (Notion Template)",
+  "description": "An all-in-one personal finance system to track multi-currency bank accounts, automate monthly budgeting, log cash flow, and monitor net worth growth in real-time.",
+  "target_audience": "Professionals, Freelancers, Investors, Individuals seeking financial clarity",
+  "price_usd": 19.99,
   "components": [
-    "1-Click Income & Expense Logger",
-    "Subscription Audit & Renewal Alert Hub",
-    "Visual Net Worth & Asset / Crypto Calculator",
-    "Savings Goals with Dynamic Progress Bars"
+    "Net Worth & Multi-Account Dashboard (Cash, Savings, Crypto, Investments)",
+    "Monthly Budget Planner with Expense Caps & Category Variance",
+    "Daily Income & Expense Transaction Ledger",
+    "Annual Cash Flow & Wealth Trajectory Visualizer"
   ],
   "status": "Ready for Sales Page Generation",
-  "template_url": "https://meadow-cork-ca9.notion.site/Notion-3d05f716ea9d8023bc89e1e5ef30ad35?source=copy_link",
-  "created_at": "2026-09-03T11:00:00.000000",
+  "template_url": "https://meadow-cork-ca9.notion.site/Finance-Wealth-Tracker-OS-3d45f716ea9d80d18a5ddd3af3a36b2e?source=copy_link",
+  "created_at": "2026-09-07T09:00:00.000000",
   "upsell_offer": {
-    "upsell_title": "Crypto & Multi-Asset Portfolio Rebalancer",
-    "upsell_price_usd": 12.99,
-    "benefit": "Advanced asset allocation framework designed to track risk and auto-calculate portfolio rebalancing."
+    "upsell_title": "Investment Portfolio Rebalancing & Dividend Tracker Add-on",
+    "upsell_price_usd": 9.99,
+    "benefit": "Advanced valuation models and automated allocation calculators for diversified holdings."
   }
 }
-'@ | Set-Content -Path "products\generated_outputs\prod_finance_tracker_1788370002.json" -Encoding utf8
