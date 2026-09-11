@@ -4,7 +4,7 @@ import requests
 import telebot
 from telebot import types
 
-# توكن البوت والمحفظة
+# إعدادات البوت والمحفظة
 BOT_TOKEN = "8643569059:AAGtNPhQRSt6_mGImHmazlL0zhrjpQ9q6nA"
 MERCHANT_WALLET = "TL3BavN5gnMFqw2XjdnQDJRhc2n6spEFhK"
 USDT_TRC20_CONTRACT = "TR7NHqjekqxGxTW8Pbm78528U7v282KmtV"
@@ -16,7 +16,7 @@ PRODUCTS = {
     "prod_finance_tracker_os": {
         "title": "Finance & Wealth Tracker OS (Notion Template)",
         "price_usd": "19.99",
-        "template_url": "https://notion.so"  # ضع رابط القالب الفعلي هنا
+        "template_url": "https://meadow-cork-ca9.notion.site/Finance-Wealth-Tracker-OS-3d75f716ea9d8030b2d4c89a06d96d60?source=copy_link"
     },
     "prod_mobile_repair_os_1788691000": {
         "title": "Mobile Repair & Store Management OS",
