@@ -1,1 +1,1 @@
-﻿worker: python telegram_live_bot.py
+worker: python telegram_live_bot.py
