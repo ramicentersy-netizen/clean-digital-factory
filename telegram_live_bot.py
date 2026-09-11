@@ -1,36 +1,36 @@
 ﻿import os
 import json
 import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
 import requests
 import telebot
 from telebot import types
 
-# 1. خادم HTTP خفيف لتجاوز Health Check الخاص بـ Render
-class HealthCheckHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'text/plain; charset=utf-8')
-        self.end_headers()
-        self.wfile.write(b"Bot is running smoothly 24/7!")
-
-    def log_message(self, format, *args):
-        return  # كتم سجلات الفحص الدوري لمنع ازدحام الـ Logs
-
-def run_health_server():
-    port = int(os.environ.get("PORT", 10000))
-    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
-    server.serve_forever()
-
-BOT_TOKEN = "8643569059:AAGtNPhQRSt6_mGImHmazlL0zhrjpQ9q6nA"
+# توكن البوت والمحفظة
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8643569059:AAGtNPhQRSt6_mGImHmazlL0zhrjpQ9q6nA").strip()
 MERCHANT_WALLET = "TL3BavN5gnMFqw2XjdnQDJRhc2n6spEFhK"
 USDT_TRC20_CONTRACT = "TR7NHqjekqxGxTW8Pbm78528U7v282KmtV"
 PROCESSED_TX_FILE = "processed_txids.json"
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
+# قائمة منتجات مدمجة لحالات عدم وجود ملفات JSON في مسار products
+FALLBACK_PRODUCTS = {
+    "prod_finance_tracker_os": {
+        "product_id": "prod_finance_tracker_os",
+        "title": "Finance & Wealth Tracker OS (Notion Template)",
+        "price_usd": "19.99",
+        "template_url": "https://notion.so"  # ضع رابط مشاركة القالب المباشر هنا
+    },
+    "prod_mobile_repair_os_1788691000": {
+        "product_id": "prod_mobile_repair_os_1788691000",
+        "title": "Mobile Repair & Store Management OS",
+        "price_usd": "14.99",
+        "template_url": "https://notion.so"
+    }
+}
+
 def get_products():
-    products = {}
+    products = dict(FALLBACK_PRODUCTS)
     catalog_path = "products/generated_outputs"
     if os.path.exists(catalog_path):
         for f in os.listdir(catalog_path):
@@ -53,11 +53,12 @@ def match_product(query_pid, products):
     
     q = query_pid.lower()
     for pid, data in products.items():
+        if "finance" in q or "wealth" in q:
+            if "finance" in pid.lower():
+                return pid, data
         if "repair" in q and "repair" in pid:
             return pid, data
         if "second_brain" in q and "second_brain" in pid:
-            return pid, data
-        if "finance" in q and "finance" in pid:
             return pid, data
     return None, None
 
@@ -203,11 +204,28 @@ def handle_txid(message):
     except Exception as e:
         print(f"❌ Error in handle_txid: {e}")
 
-if __name__ == "__main__":
-    # تشغيل خادم الـ Health Check على خيط منفصل للاستجابة لـ Render
-    health_thread = threading.Thread(target=run_health_server, daemon=True)
-    health_thread.start()
-    print("🟢 HTTP Health check server running for Render...")
+# تطبيق WSGI خفيف لتشغيل Gunicorn وتلبية فحص سلامة Render
+def app(environ, start_response):
+    status = '200 OK'
+    response_headers = [('Content-type', 'text/plain; charset=utf-8')]
+    start_response(status, response_headers)
+    return [b"Telegram Bot is active and running 24/7."]
 
-    print("🟢 Starting Automated Payment Verification Telegram Bot (Smart Matching Enabled)...")
-    bot.infinity_polling(skip_pending=True)
+# تشغيل البوت في خيط منفصل (Background Worker Thread)
+def start_bot_worker():
+    print("🟢 Starting Automated Telegram Polling...")
+    try:
+        bot.infinity_polling(skip_pending=True)
+    except Exception as e:
+        print(f"❌ Bot polling crashed: {e}")
+
+bot_thread = threading.Thread(target=start_bot_worker, daemon=True)
+bot_thread.start()
+
+if __name__ == "__main__":
+    # تشغيل محلي اختياري بدون gunicorn
+    from wsgiref.simple_server import make_server
+    port = int(os.environ.get("PORT", 10000))
+    httpd = make_server("0.0.0.0", port, app)
+    print(f"🟢 Server listening on port {port}...")
+    httpd.serve_forever()
