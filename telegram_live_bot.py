@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import requests
 import telebot
@@ -55,15 +56,15 @@ def verify_tron_tx(txid, expected_usd):
         headers = {"User-Agent": "Mozilla/5.0"}
         res = requests.get(url, headers=headers, timeout=12)
         if res.status_code != 200:
-            return False, "Unable to query TRON network. Please try again shortly."
+            return False, "تعذر الاتصال بشبكة ترون حالياً، يرجى إعادة المحاولة بعد قليل."
         
         data = res.json()
         if not data.get("confirmed", False):
-            return False, "Transaction is not confirmed on blockchain yet. Please wait 1-2 minutes."
+            return False, "المعاملة قيد التأكيد على البلوكشين، انتظر دقيقة وأعد الإرسال."
 
         trc20_transfers = data.get("trc20TransferInfo", [])
         if not trc20_transfers:
-            return False, "No TRC20 transfer detected in this transaction hash."
+            return False, "لم يتم العثور على تحويل USDT (TRC20) ضمن هذا الرمز."
 
         for transfer in trc20_transfers:
             to_addr = transfer.get("to_address", "")
@@ -76,9 +77,9 @@ def verify_tron_tx(txid, expected_usd):
                 if paid_amount >= (expected_usd - 0.5):
                     return True, paid_amount
 
-        return False, "Payment mismatch or not sent to merchant wallet."
+        return False, "المعاملة صحيحة لكن المبلغ غير مطابق أو لم يتم إرساله إلى عنوان المتجر."
     except Exception as e:
-        return False, f"Verification error: {str(e)}"
+        return False, f"خطأ أثناء التحقق: {str(e)}"
 
 def send_invoice(chat_id, pid):
     prod = PRODUCTS.get(pid)
@@ -132,21 +133,37 @@ def handle_buy_click(call):
 def prompt_txid(call):
     pid = call.data.replace("verify_", "")
     user_sessions[call.message.chat.id] = pid
-    bot.send_message(call.message.chat.id, "✍️ أرسل الآن رمز المعاملة (TXID / Hash) الخاص بالتحويل:")
+    bot.answer_callback_query(call.id)
+    bot.send_message(
+        call.message.chat.id,
+        "✍️ أرسل الآن رمز المعاملة (TXID / Hash) المكون من 64 خانة الخاص بالتحويل:"
+    )
 
-@bot.message_handler(func=lambda msg: len(msg.text.strip()) == 64)
-def handle_txid(message):
+@bot.message_handler(func=lambda msg: not msg.text.startswith("/"))
+def handle_incoming_text(message):
     try:
-        txid = message.text.strip()
+        raw_text = message.text.strip()
         chat_id = message.chat.id
         pid = user_sessions.get(chat_id)
 
-        if not pid or pid not in PRODUCTS:
-            bot.send_message(chat_id, "⚠️ الرجاء اختيار المنتج أولاً قبل إرسال الـ TXID.")
+        # استخراج الـ TXID المكون من 64 حرفاً ورقماً
+        match = re.search(r"\b([a-fA-F0-9]{64})\b", raw_text)
+        
+        if not match:
+            bot.send_message(
+                chat_id, 
+                "⚠️ الرمز المُرسل غير صالح.\nيرجى التأكد من نسخ رمز المعاملة (TXID) كاملاً المؤلف من 64 خانة."
+            )
             return
 
+        txid = match.group(1).lower()
+
+        if not pid or pid not in PRODUCTS:
+            pid = "prod_finance_tracker_os"
+            user_sessions[chat_id] = pid
+
         if is_tx_processed(txid):
-            bot.send_message(chat_id, "❌ تم استخدام رمز هذه المعاملة مسبقاً.")
+            bot.send_message(chat_id, "❌ تم استخدام رمز هذه المعاملة مسبقاً وتفعيل القالب.")
             return
 
         prod = PRODUCTS[pid]
@@ -168,7 +185,7 @@ def handle_txid(message):
         else:
             bot.send_message(chat_id, f"❌ فشل التحقق:\n{res}")
     except Exception as e:
-        print(f"Error in handle_txid: {e}")
+        print(f"Error in handle_incoming_text: {e}")
 
 if __name__ == "__main__":
     print("🟢 Bot is starting polling loop...")
