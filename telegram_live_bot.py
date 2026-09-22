@@ -6,7 +6,7 @@ import requests
 import telebot
 from telebot import types
 
-# 1. خادم فحص الصحة لمنصة Render (يعمل على بورت 10000)
+# 1. خادم فحص الصحة لمنصة Render (يعمل على البورت المخصص للمنصة)
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -22,12 +22,12 @@ def run_health_server():
     server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
     server.serve_forever()
 
-BOT_TOKEN = "8643569059:AAGtNPhQRSt6_mGImHmazlL0zhrjpQ9q6nA"
+# التوكن الجديد والمحفظة وعقد USDT الرسمي
+BOT_TOKEN = "8643569059:AAGQInLyyRN-2qvmuk-SJ_Z4JIuMmfp390I"
 MERCHANT_WALLET = "TL3BavN5gnMFqw2XjdnQDJRhc2n6spEFhK"
 USDT_TRC20_CONTRACT = "TR7NHqjekqxGxTW8Pbm78528U7v282KmtV"
 PROCESSED_TX_FILE = "processed_txids.json"
 
-# إيقاف التعدد الملتبس في الخيوط لتثبيت الاستجابة محلياً
 bot = telebot.TeleBot(BOT_TOKEN, threaded=False)
 
 # 2. قراءة كتالوج المنتجات
@@ -71,29 +71,28 @@ def match_product(query_pid, products):
 
 user_sessions = {}
 
-# 4. إرسال بطاقة الفاتورة الرسمية باللغة الإنجليزية
+# 4. إرسال بطاقة الفاتورة المباشرة
 def send_invoice(chat_id, actual_pid, prod):
     user_sessions[chat_id] = actual_pid
     price = prod.get("price_usd", "0")
     title = prod.get("title", "Product")
     
     msg = (
-        f"🛍️ Order Confirmation: {title}\n\n"
-        f"💵 Amount Due: {price} USDT (TRC20)\n"
-        f"📥 Official TRC20 Wallet:\n"
+        f"🛍️ *Order Confirmation:* {title}\n\n"
+        f"💵 *Amount Due:* {price} USDT (TRC20)\n"
+        f"📥 *Official TRC20 Wallet:*\n"
         f"`{MERCHANT_WALLET}`\n\n"
-        f"📌 Instructions:\n"
-        f"1. Transfer the exact amount above.\n"
-        f"2. Copy your transaction hash (TXID).\n"
-        f"3. Send the TXID here for instant automated delivery!"
+        f"📌 *Instructions:*\n"
+        f"1. Transfer the exact amount above via TRC20 network.\n"
+        f"2. Copy your 64-character transaction hash (TXID).\n"
+        f"3. Send the TXID here directly for instant delivery!"
     )
-    # Inline button
     markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("⚡ Verify Transaction / Submit TXID", callback_data="btn_verify"))
+    markup.add(types.InlineKeyboardButton("⚡ Submit / Verify TXID", callback_data="btn_verify"))
     bot.send_message(chat_id, msg, parse_mode="Markdown", reply_markup=markup)
     print(f"--> [OK] Invoice delivered to {chat_id} for: {title}")
 
-# 5. معالجة أمر /start وإرسال أزرار Inline وأزرار الكيبورد المباشرة
+# 5. معالجة أمر /start وإرسال القوائم المباشرة (Dual-Keyboard)
 @bot.message_handler(commands=["start"])
 def handle_start(message):
     try:
@@ -106,7 +105,6 @@ def handle_start(message):
         if prod:
             send_invoice(chat_id, actual_pid, prod)
         else:
-            # Inline Keyboard
             inline_kb = types.InlineKeyboardMarkup(row_width=1)
             inline_kb.add(
                 types.InlineKeyboardButton("🛒 Finance & Wealth Tracker OS ($19.99)", callback_data="buy_finance"),
@@ -114,23 +112,22 @@ def handle_start(message):
                 types.InlineKeyboardButton("🛒 Ultimate Second Brain OS ($19.99)", callback_data="buy_second_brain")
             )
             
-            # Reply Keyboard (كيبورد شات مضمون بنسبة 100% ولا يعلق أبداً)
             reply_kb = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
             reply_kb.add(types.KeyboardButton("🛠️ Mobile Repair OS ($14.99)"))
             reply_kb.add(types.KeyboardButton("💰 Finance & Wealth Tracker ($19.99)"))
             reply_kb.add(types.KeyboardButton("🧠 Ultimate Second Brain ($19.99)"))
 
             welcome_text = (
-                "👋 Welcome to the Digital Products Store!\n\n"
-                "Please select a template below to view the invoice and proceed with instant delivery:"
+                "👋 *Welcome to the SystemFlow OS Store!*\n\n"
+                "Select a digital workspace below to generate your invoice and proceed with instant delivery:"
             )
-            bot.send_message(chat_id, welcome_text, reply_markup=inline_kb)
-            bot.send_message(chat_id, "👇 Or tap any item from the menu below:", reply_markup=reply_kb)
+            bot.send_message(chat_id, welcome_text, parse_mode="Markdown", reply_markup=inline_kb)
+            bot.send_message(chat_id, "👇 Or choose directly from the quick menu:", reply_markup=reply_kb)
             print(f"--> [OK] Storefront menu sent to {chat_id}")
     except Exception as e:
         print(f"Error in /start: {e}")
 
-# 6. معالج أزرار الكيبورد العادية (Reply Buttons) - مضمون وفوري
+# 6. معالج أزرار الكيبورد السفلية المباشرة (Reply Buttons)
 @bot.message_handler(func=lambda msg: any(k in msg.text for k in ["Mobile Repair", "Finance", "Second Brain"]))
 def handle_menu_text_selection(message):
     chat_id = message.chat.id
@@ -151,7 +148,7 @@ def handle_menu_text_selection(message):
     else:
         bot.send_message(chat_id, "⚠️ Product spec not found.")
 
-# 7. معالج أحداث الـ Inline Callbacks المباشر
+# 7. معالج أحداث الضغط على الأزرار المضمنة (Inline Callbacks)
 @bot.callback_query_handler(func=lambda call: True)
 def handle_inline_clicks(call):
     chat_id = call.message.chat.id
@@ -159,7 +156,7 @@ def handle_inline_clicks(call):
     print(f"--> [CLICK] Received callback data: {data} from user {chat_id}")
 
     try:
-        bot.answer_callback_query(call.id, text="Loading...")
+        bot.answer_callback_query(call.id)
     except Exception as e:
         print(f"Callback answer warning: {e}")
 
@@ -180,7 +177,7 @@ def handle_inline_clicks(call):
         if prod:
             send_invoice(chat_id, actual_pid, prod)
 
-# 8. منع الإنفاق المزدوج والتحقق من المعاملات
+# 8. منع الإنفاق المزدوج والتحقق من البلوكشين عبر Tronscan
 def is_tx_processed(txid):
     if not os.path.exists(PROCESSED_TX_FILE):
         return False
@@ -227,7 +224,7 @@ def verify_tron_tx(txid, expected_usd):
     except Exception as e:
         return False, f"Blockchain verification error: {str(e)}"
 
-# 9. استقبال وفحص الـ TXID
+# 9. استقبال وفحص الـ TXID والتسليم الفوري
 @bot.message_handler(func=lambda msg: len(msg.text.strip()) == 64)
 def handle_txid_input(message):
     try:
@@ -238,7 +235,7 @@ def handle_txid_input(message):
 
         if not pid or pid not in products:
             for p in products:
-                if "repair" in p.lower():
+                if "finance" in p.lower():
                     pid = p
                     break
 
@@ -247,7 +244,7 @@ def handle_txid_input(message):
             return
 
         prod = products.get(pid, {})
-        price = float(prod.get("price_usd", 14.99))
+        price = float(prod.get("price_usd", 19.99))
 
         bot.send_message(chat_id, "🔍 Verifying transaction on TRON blockchain, please hold on...")
         ok, res = verify_tron_tx(txid, price)
@@ -256,21 +253,20 @@ def handle_txid_input(message):
             mark_tx_processed(txid, pid, res)
             template_url = prod.get("template_url", "https://notion.so")
             success_msg = (
-                f"🎉 **Payment Confirmed Successfully!**\n\n"
-                f"📦 **Product:** {prod.get('title')}\n"
-                f"💰 **Amount Received:** {res} USDT\n\n"
-                f"🔗 **Instant Access Link (Notion):**\n{template_url}\n\n"
+                f"🎉 *Payment Confirmed Successfully!*\n\n"
+                f"📦 *Product:* {prod.get('title')}\n"
+                f"💰 *Amount Received:* {res} USDT\n\n"
+                f"🔗 *Instant Access Link (Notion):*\n{template_url}\n\n"
                 f"Thank you for your purchase!"
             )
             bot.send_message(chat_id, success_msg, parse_mode="Markdown")
         else:
-            bot.send_message(chat_id, f"❌ **Verification Failed:**\n{res}")
+            bot.send_message(chat_id, f"❌ *Verification Failed:*\n{res}")
     except Exception as e:
         print(f"Error in handle_txid: {e}")
 
 if __name__ == "__main__":
-    # تشغيل خادم الصحة لمنصة Render
     threading.Thread(target=run_health_server, daemon=True).start()
     print("🟢 Render Health server active on port 10000...")
-    print("🟢 Bot engine is LIVE with Dual-Keyboard mode (Inline + Reply)...")
+    print("🟢 Bot engine is LIVE with Clean Dual-Keyboard & New Token...")
     bot.infinity_polling(skip_pending=True, timeout=20)
