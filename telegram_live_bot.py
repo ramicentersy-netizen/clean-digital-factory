@@ -6,7 +6,7 @@ import requests
 import telebot
 from telebot import types
 
-# 1. خادم فحص الصحة لمنصة Render (يعمل على البورت المخصص للمنصة)
+# 1. خادم فحص الصحة لمنصة Render
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -22,7 +22,6 @@ def run_health_server():
     server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
     server.serve_forever()
 
-# التوكن الجديد والمحفظة وعقد USDT الرسمي
 BOT_TOKEN = "8643569059:AAGQInLyyRN-2qvmuk-SJ_Z4JIuMmfp390I"
 MERCHANT_WALLET = "TL3BavN5gnMFqw2XjdnQDJRhc2n6spEFhK"
 USDT_TRC20_CONTRACT = "TR7NHqjekqxGxTW8Pbm78528U7v282KmtV"
@@ -47,7 +46,7 @@ def get_products():
                     print(f"Error loading {f}: {e}")
     return products
 
-# 3. المطابقة الذكية للمنتجات (Smart Matching)
+# 3. المطابقة الذكية للمنتجات (تتضمن القالب الجديد freelance)
 def match_product(query_pid, products):
     if not query_pid:
         return None, None
@@ -57,6 +56,8 @@ def match_product(query_pid, products):
     q = str(query_pid).lower()
     for pid, data in products.items():
         p_str = (pid + " " + data.get("title", "")).lower()
+        if "freelance" in q and ("freelance" in p_str or "agency" in p_str):
+            return pid, data
         if "repair" in q and "repair" in p_str:
             return pid, data
         if "second_brain" in q and ("second_brain" in p_str or "second brain" in p_str):
@@ -92,7 +93,7 @@ def send_invoice(chat_id, actual_pid, prod):
     bot.send_message(chat_id, msg, parse_mode="Markdown", reply_markup=markup)
     print(f"--> [OK] Invoice delivered to {chat_id} for: {title}")
 
-# 5. معالجة أمر /start وإرسال القوائم المباشرة (Dual-Keyboard)
+# 5. معالجة أمر /start وإرسال القوائم المحدثة للقوالب الأربعة
 @bot.message_handler(commands=["start"])
 def handle_start(message):
     try:
@@ -107,14 +108,16 @@ def handle_start(message):
         else:
             inline_kb = types.InlineKeyboardMarkup(row_width=1)
             inline_kb.add(
+                types.InlineKeyboardButton("💼 Freelance & Agency OS ($19.99)", callback_data="buy_freelance"),
                 types.InlineKeyboardButton("🛒 Finance & Wealth Tracker OS ($19.99)", callback_data="buy_finance"),
                 types.InlineKeyboardButton("🛒 Mobile Repair & Store Management OS ($14.99)", callback_data="buy_repair"),
                 types.InlineKeyboardButton("🛒 Ultimate Second Brain OS ($19.99)", callback_data="buy_second_brain")
             )
             
             reply_kb = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
-            reply_kb.add(types.KeyboardButton("🛠️ Mobile Repair OS ($14.99)"))
+            reply_kb.add(types.KeyboardButton("💼 Freelance & Agency OS ($19.99)"))
             reply_kb.add(types.KeyboardButton("💰 Finance & Wealth Tracker ($19.99)"))
+            reply_kb.add(types.KeyboardButton("🛠️ Mobile Repair OS ($14.99)"))
             reply_kb.add(types.KeyboardButton("🧠 Ultimate Second Brain ($19.99)"))
 
             welcome_text = (
@@ -127,14 +130,16 @@ def handle_start(message):
     except Exception as e:
         print(f"Error in /start: {e}")
 
-# 6. معالج أزرار الكيبورد السفلية المباشرة (Reply Buttons)
-@bot.message_handler(func=lambda msg: any(k in msg.text for k in ["Mobile Repair", "Finance", "Second Brain"]))
+# 6. معالج أزرار الكيبورد السفلية (Reply Buttons)
+@bot.message_handler(func=lambda msg: any(k in msg.text for k in ["Freelance", "Mobile Repair", "Finance", "Second Brain"]))
 def handle_menu_text_selection(message):
     chat_id = message.chat.id
     text = message.text.lower()
     products = get_products()
 
-    if "repair" in text:
+    if "freelance" in text or "agency" in text:
+        actual_pid, prod = match_product("freelance", products)
+    elif "repair" in text:
         actual_pid, prod = match_product("repair", products)
     elif "finance" in text:
         actual_pid, prod = match_product("finance", products)
@@ -148,7 +153,7 @@ def handle_menu_text_selection(message):
     else:
         bot.send_message(chat_id, "⚠️ Product spec not found.")
 
-# 7. معالج أحداث الضغط على الأزرار المضمنة (Inline Callbacks)
+# 7. معالج أحداث الـ Inline Callbacks
 @bot.callback_query_handler(func=lambda call: True)
 def handle_inline_clicks(call):
     chat_id = call.message.chat.id
@@ -164,6 +169,10 @@ def handle_inline_clicks(call):
 
     if data == "btn_verify":
         bot.send_message(chat_id, "✍️ Please paste your 64-character TRC20 transaction hash (TXID) below:")
+    elif data == "buy_freelance":
+        actual_pid, prod = match_product("freelance", products)
+        if prod:
+            send_invoice(chat_id, actual_pid, prod)
     elif data == "buy_finance":
         actual_pid, prod = match_product("finance", products)
         if prod:
@@ -177,7 +186,7 @@ def handle_inline_clicks(call):
         if prod:
             send_invoice(chat_id, actual_pid, prod)
 
-# 8. منع الإنفاق المزدوج والتحقق من البلوكشين عبر Tronscan
+# 8. منع الإنفاق المزدوج وفحص البلوكشين عبر Tronscan
 def is_tx_processed(txid):
     if not os.path.exists(PROCESSED_TX_FILE):
         return False
@@ -235,7 +244,7 @@ def handle_txid_input(message):
 
         if not pid or pid not in products:
             for p in products:
-                if "finance" in p.lower():
+                if "freelance" in p.lower():
                     pid = p
                     break
 
@@ -268,5 +277,5 @@ def handle_txid_input(message):
 if __name__ == "__main__":
     threading.Thread(target=run_health_server, daemon=True).start()
     print("🟢 Render Health server active on port 10000...")
-    print("🟢 Bot engine is LIVE with Clean Dual-Keyboard & New Token...")
+    print("🟢 Bot engine is LIVE with 4 Products (Freelance OS Included)...")
     bot.infinity_polling(skip_pending=True, timeout=20)
